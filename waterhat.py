@@ -1,4 +1,3 @@
-#sudo apt install git -y
 #pip3 install adafruit-circuitpython-ads1x15
 
 from datetime import datetime

@@ -1,7 +1,4 @@
 import RPi.GPIO as GPIO
-#import os
-#import serial
-#import sys
 import time
 rainIo = 5
 GPIO.setmode(GPIO.BCM)
