@@ -79,20 +79,3 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("KeyboardInterrupt from loop")
-
-#d1125 = 0.32 #ESE
-#d0675 = 0.41 #ENE
-#d0900 = 0.45 #E
-#d1575 = 0.62 #SSE
-#d1350 = 0.90 #SE
-#d2025 = 1.19 #SSW
-#d1800 = 1.40 #S
-#d0225 = 1.98 #NNE
-#d0450 = 2.25 #NE
-#d2475 = 2.93 #WSW
-#d2250 = 3.08 #SW
-#d3375 = 3.43 #NNW
-#d0000 = 3.84 #N
-#d2925 = 4.04 #WNW
-#d3150 = 4.33 #NW
-#d2700 = 4.62 #W

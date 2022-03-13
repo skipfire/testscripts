@@ -1,18 +1,14 @@
-#sudo apt install -y git python3-setuptools python3-pip libgpiod2
-#git clone https://github.com/doceme/py-spidev
-#cd py-spidev
-#sudo python3 setup.py install
-#sudo pip3 install adafruit-circuitpython-bme280 adafruit-circuitpython-dht
+#sudo pip3 install adafruit-circuitpython-bme280 adafruit-circuitpython-ads1x15
 
-import Adafruit_DHT
+import adafruit_ads1x15.ads1015 as ADS
+import board
+import busio
 import RPi.GPIO as GPIO
-import sys
 import time
-from spidev import SpiDev
+from adafruit_ads1x15.analog_in import AnalogIn
+from adafruit_bme280 import basic as adafruit_bme280
 from datetime import datetime
 
-DHT_SENSOR = Adafruit_DHT.DHT22
-DHT_PIN = 22
 rainIo = 5
 windIo = 6
 baseVoltage = 5.0
@@ -37,28 +33,6 @@ d2700 = 4.62 #W
 
 voltages = [d0000, d0225, d0450, d0675, d0900, d1125, d1350, d1575, d1800, d2025, d2250, d2475, d2700, d2925, d3150, d3375]
 
-class MCP3008:
-    def __init__(self, bus = 0, device = 0):
-        self.bus, self.device = bus, device
-        self.spi = SpiDev()
-        self.open()
-        self.spi.max_speed_hz = 1000000 # 1MHz
-
-    def open(self):
-        self.spi.open(self.bus, self.device)
-        self.spi.max_speed_hz = 1000000 # 1MHz
-
-    def read(self, channel = 0):
-        adc = self.spi.xfer2([1, (8 + channel) << 4, 0])
-        data = ((adc[1] & 3) << 8) + adc[2]
-        return data
-
-    def close(self):
-        self.spi.close()
-
-adc = MCP3008(bus=1)
-adc.open()
-
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(rainIo, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -76,23 +50,30 @@ def findClosest(list, value):
 GPIO.add_event_detect(rainIo, GPIO.FALLING, callback=rainClick)
 GPIO.add_event_detect(windIo, GPIO.FALLING, callback=windClick)
 
+i2c = busio.I2C(board.SCL, board.SDA)
+ads = ADS.ADS1015(i2c)
+
+bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c, 118)
+# change this to match the location's pressure (hPa) at sea level
+bme280.sea_level_pressure = 1013.25
+
 try:
     while True:
-        humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
-        if humidity is not None and temperature is not None:
+        temperature = bme280.temperature
+        humidity = bme280.relative_humidity
+        pressure = bme280.pressure * 0.02953
+
+        if humidity is not None and temperature is not None and pressure is not None:
             temp = temperature * 1.8 + 32
-            print("Temp={0:0.1f}°  Humidity={1:0.1f}%".format(temp, humidity))
+            print("Temp={0:0.1f}°  Humidity={1:0.1f}%  Pressure={2:0.2f}\"HG".format(temp, humidity, pressure))
         else:
             print("Failed to retrieve data from humidity sensor")
-        val = adc.read(channel = 0)
-        voltage = 0
-        if val == 0:
-            print("No data read from MCP3008")
+        chan = AnalogIn(ads, ADS.P0)
+        voltage = chan.voltage
+        if voltage == 0:
+            print("No data read from ADC")
         else:
-            voltage = val/1024.0*baseVoltage*multiplier
             closest = findClosest(voltages, voltage)
-            print("Val: {}".format(val))
-            print("Voltage: {:.2F}".format(voltage))
             if closest == d0000:
                 direction = "N"
             elif closest == d0225:
@@ -127,7 +108,7 @@ try:
                 direction = "NNW"
             else:
                 direction = "unknown"
-            print(direction)
+            print("Wind Direction = ", direction)
         time.sleep(1)
 except KeyboardInterrupt:
     print("KeyboardInterrupt from loop")
@@ -135,21 +116,3 @@ except KeyboardInterrupt:
 GPIO.cleanup() # clean up GPIO on normal exit
 
 print("Done")
-
-#d1125 = 0.32 #ESE
-#d0675 = 0.41 #ENE
-#d0900 = 0.45 #E
-#d1575 = 0.62 #SSE
-#d1350 = 0.90 #SE
-#d2025 = 1.19 #SSW
-#d1800 = 1.40 #S
-#d0225 = 1.98 #NNE
-#d0450 = 2.25 #NE
-#d2475 = 2.93 #WSW
-#d2250 = 3.08 #SW
-#d3375 = 3.43 #NNW
-#d0000 = 3.84 #N
-#d2925 = 4.04 #WNW
-#d3150 = 4.33 #NW
-#d2700 = 4.62 #W
-

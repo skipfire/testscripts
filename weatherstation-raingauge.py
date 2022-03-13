@@ -10,7 +10,7 @@ def buttonPressed(channel):
     global buttonTested
     print("Rain change", GPIO.input(rainIo))
 
-GPIO.add_event_detect(rainIo, GPIO.BOTH, callback=buttonPressed)
+GPIO.add_event_detect(rainIo, GPIO.FALLING, callback=buttonPressed)
 try:
     while buttonTested == False:
         time.sleep(1)
