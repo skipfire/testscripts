@@ -1,17 +1,14 @@
 #pip3 install adafruit-circuitpython-ads1x15
 
-from datetime import datetime
-import time
 import board
 import busio
-import adafruit_ads1x15.ads1015 as ADS
+import time
+import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+from datetime import datetime
 
 def findClosest(list, value):
     return list[min(range(len(list)), key = lambda i: abs(list[i]-value))]
-
-baseVoltage = 5.0
-multiplier = 1.05 #the voltage is not quite what it should be, this gets really close.
 
 d1125 = 0.32 #ESE
 d0675 = 0.41 #ENE
@@ -33,7 +30,8 @@ d2700 = 4.62 #W
 voltages = [d0000, d0225, d0450, d0675, d0900, d1125, d1350, d1575, d1800, d2025, d2250, d2475, d2700, d2925, d3150, d3375]
 
 i2c = busio.I2C(board.SCL, board.SDA)
-ads = ADS.ADS1015(i2c)
+ads = ADS.ADS1115(i2c)
+ads.gain = 2/3
 
 try:
     while True:

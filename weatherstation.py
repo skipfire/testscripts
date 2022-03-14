@@ -1,6 +1,6 @@
 #sudo pip3 install adafruit-circuitpython-bme280 adafruit-circuitpython-ads1x15
 
-import adafruit_ads1x15.ads1015 as ADS
+import adafruit_ads1x15.ads1115 as ADS
 import board
 import busio
 import RPi.GPIO as GPIO
@@ -11,8 +11,6 @@ from datetime import datetime
 
 rainIo = 5
 windIo = 6
-baseVoltage = 5.0
-multiplier = 1.05 #the voltage is not quite what it should be, this gets really close.
 
 d1125 = 0.32 #ESE
 d0675 = 0.41 #ENE
@@ -51,7 +49,8 @@ GPIO.add_event_detect(rainIo, GPIO.FALLING, callback=rainClick)
 GPIO.add_event_detect(windIo, GPIO.FALLING, callback=windClick)
 
 i2c = busio.I2C(board.SCL, board.SDA)
-ads = ADS.ADS1015(i2c)
+ads = ADS.ADS1115(i2c)
+ads.gain = 2/3
 
 bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c, 118)
 # change this to match the location's pressure (hPa) at sea level
@@ -73,6 +72,7 @@ try:
         if voltage == 0:
             print("No data read from ADC")
         else:
+            print("Voltage: {0:0.2f}".format(voltage))
             closest = findClosest(voltages, voltage)
             if closest == d0000:
                 direction = "N"
